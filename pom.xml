@@ -4,6 +4,7 @@
   <artifactId>digester</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>digester</name>
+  
   <dependencies>
   	<dependency>
 			<groupId>junit</groupId>
