@@ -74,8 +74,10 @@ public class TrackpointT {
     protected SensorStateT sensorState;
     @XmlElement(name = "Extensions")
     protected ExtensionsT extensions;
+    @XmlElement(name = "Speed")
+    protected Double speed = 0.0;
 
-    /**
+	/**
      * Gets the value of the time property.
      * 
      * @return
@@ -266,5 +268,14 @@ public class TrackpointT {
     public void setExtensions(ExtensionsT value) {
         this.extensions = value;
     }
+
+
+    public Double getSpeed() {
+		return speed;
+	}
+
+	public void setSpeed(Double speed) {
+		this.speed = speed;
+	}
 
 }

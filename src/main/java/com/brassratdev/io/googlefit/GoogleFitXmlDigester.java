@@ -3,6 +3,9 @@ package com.brassratdev.io.googlefit;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
 import org.apache.commons.digester3.binder.DigesterLoader;
@@ -35,14 +38,20 @@ import com.brassratdev.io.XMLDigester;
  */
 public class GoogleFitXmlDigester extends XMLDigester {
 	private final static Logger log = LogManager.getLogger(GoogleFitXmlDigester.class);
-
+	private Options options = new Options();
+	
 	public GoogleFitXmlDigester() {
 		init();
 	}
 
 	protected void init() {
 		log.info("init, using GPXTrackModule");
+		
 		digester = DigesterLoader.newLoader(new GPXTrackModule()).newDigester();
+		Option input = Option.builder("file").hasArg().argName("input").desc("input garmin data file to parse").build();
+		Option kml = Option.builder("kml").desc("parse input as kml output, generating a file with same name and kml suffix").build();
+		
+		options.addOption(input).addOption(kml);
 	}
 
 	public TrainingCenterDatabaseT parse(Path path) {

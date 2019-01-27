@@ -1,4 +1,4 @@
-package core;
+package com.brassratdev.test.digester;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -8,9 +8,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
 import org.apache.commons.digester3.binder.DigesterLoader;
@@ -59,7 +65,7 @@ public class TestGoogleFitDigester {
 	}
 
 
-	@Test
+	@Ignore
 	public void testGoogleFitDigester() throws IOException, SAXException {
 		print(digester.parse(path));
 	}
@@ -74,6 +80,15 @@ public class TestGoogleFitDigester {
 		maxVel(digester.parse(path));
 	}
 
+	@Ignore
+	public void testCLIOptions() {
+		Option input = Option.builder("file").hasArg().argName("input").desc("input garmin data file to parse").build();
+		Option kml = Option.builder("kml").desc("parse input as kml output, generating a file with same name and kml suffix").build();
+		Options options = new Options();
+		options.addOption(input).addOption(kml);
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp( "GoogleFitDigesterApp", options );
+	}
 	
 	void writeKmlLineStringPath(TrainingCenterDatabaseT t)
 			throws FileNotFoundException {
@@ -104,9 +119,42 @@ public class TestGoogleFitDigester {
 	void writeKmlColoredLineStringPath(TrainingCenterDatabaseT t) throws FileNotFoundException {
 		List<TrackpointT> points = trackFor(t).getTrackpoint();
 		filter( points );
+		calculateSpeed( points );
 		writeKml( points );
 	}
 	
+	private void calculateSpeed(List<TrackpointT> points) {
+		for (int i = 1; i < points.size(); i++){
+			TrackpointT start = points.get(i-1);
+			TrackpointT end = points.get(i);
+//			start.setSpeed(0.0);
+//			end.setSpeed(0.0);
+			double x2 = end.getDistanceMeters().doubleValue();
+			double x1 = start.getDistanceMeters().doubleValue();
+			double dx = x2 - x1; 
+			String s = String.format("dx:%3.3f,x1:%3.3f,x2:%3.3f",dx,x1,x2);
+			log.info(s);
+			try {
+				Date t1 = dateFor(start.getTime());
+				Date t2 = dateFor(end.getTime());
+				double dt = (t2.getTime() - t1.getTime()) / 1000.0;
+				double speed = dx/dt;//meters per second
+				end.setSpeed(speed);
+				s = String.format("dt:%3.3f,speed:%3.3f",dt,speed);
+				log.info(s);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private Date dateFor(String date) throws ParseException {
+		SimpleDateFormat f = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss.SSSX");
+		//2019-01-22T18:17:20.287Z
+		return f.parse(date);
+	}
+
 	void writeKml(List<TrackpointT> points) throws FileNotFoundException {
 		Kml kml = KmlFactory.createKml();
 		Document d = kml.createAndSetDocument();
@@ -117,7 +165,7 @@ public class TestGoogleFitDigester {
 			
 			Placemark p = d.createAndAddPlacemark().withName(name);
 			p.createAndAddStyle().createAndSetLineStyle()
-					//.withColor( colorForSpeed( end.getSpeed() ) )
+					.withColor( colorForSpeed( end.getSpeed().floatValue() ) )
 					.withWidth(2.0);
 			LineString ls = p.createAndSetLineString();
 			PositionT posStart = start.getPosition();
@@ -131,14 +179,15 @@ public class TestGoogleFitDigester {
 	}
 	
 	void maxVel(TrainingCenterDatabaseT tcd) {
-		
-//		List<Trackpoint> points = tcd.getActivities().getActivity().get(0).getLap().get(0).get
-//		float maxVel = 0.0f;
-//		for (TrackpointT t:points){
-//			if( t.getSpeed() > maxVel )
-//				maxVel = t.getSpeed();
-//		}
-//		System.out.println("maxVel is: " + maxVel);
+		List<TrackpointT> points = trackFor(tcd).getTrackpoint();
+		filter( points );
+		calculateSpeed( points );
+		float maxVel = 0.0f;
+		for (TrackpointT t:points){
+			if( t.getSpeed() > maxVel )
+				maxVel = t.getSpeed().floatValue();
+		}
+		System.out.println("maxVel is: " + maxVel);
 	}
 
 	// /@return hex color string

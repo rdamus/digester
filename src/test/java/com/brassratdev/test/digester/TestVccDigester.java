@@ -1,4 +1,4 @@
-package core;
+package com.brassratdev.test.digester;
 
 import java.awt.Color;
 import java.io.FileNotFoundException;

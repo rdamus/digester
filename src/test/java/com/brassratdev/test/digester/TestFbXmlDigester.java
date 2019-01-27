@@ -1,4 +1,4 @@
-package core;
+package com.brassratdev.test.digester;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
